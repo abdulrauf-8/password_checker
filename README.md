@@ -144,9 +144,7 @@ Python strings are immutable — they linger in heap memory until garbage collec
 password-strength-checker/
 │
 ├── password_checker_gui.py    ← Main GUI app (run this)
-├── password_checker.py        ← CLI version (terminal only)
-├── password_checker.html      ← Browser version (open in any browser)
-│
+├── password_checker.py        ← CLI version (terminal only)│
 ├── preview_strong.png         ← Screenshot — strong password
 ├── preview_weak.png           ← Screenshot — weak password  
 ├── preview_very_strong.png    ← Screenshot — very strong password
