@@ -172,7 +172,7 @@ password-strength-checker/
 A full project report covering problem statement, security policy, implementation details, entropy analysis, test cases, and key learnings is included as:
 
 ```
-Project1_Report_DecodeLabs.docx
+Project 1 Report.pdf
 ```
 
 ---
