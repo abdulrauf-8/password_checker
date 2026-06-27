@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Password Strength Checker — DecodeLabs Project 1</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e5ea;
+      padding: 2rem;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .header i { font-size: 24px; color: #3b82f6; }
+    .header-text { font-size: 17px; font-weight: 600; color: #111; }
+    .header-sub { font-size: 12px; color: #888; margin-top: 1px; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    .pw-wrap { position: relative; display: flex; align-items: center; }
+
+    .pw-input {
+      width: 100%;
+      height: 44px;
+      padding: 0 44px 0 14px;
+      font-size: 15px;
+      font-family: "Courier New", monospace;
+      border: 1.5px solid #d1d5db;
+      border-radius: 10px;
+      background: #f9fafb;
+      color: #111;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .pw-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+      background: #fff;
+    }
+
+    .eye-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #999;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      font-size: 18px;
+      transition: color 0.15s;
+    }
+    .eye-btn:hover { color: #555; }
+
+    .meter-wrap { margin-top: 14px; }
+    .meter-bars { display: flex; gap: 6px; margin-bottom: 8px; }
+    .bar {
+      flex: 1;
+      height: 6px;
+      border-radius: 4px;
+      background: #e5e7eb;
+      transition: background 0.3s;
+    }
+
+    .meter-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .strength-label { font-size: 13px; font-weight: 600; color: #aaa; }
+    .score-label { font-size: 12px; color: #aaa; }
+
+    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 1.25rem 0; }
+
+    .checks { display: flex; flex-direction: column; gap: 8px; }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 13.5px;
+      color: #888;
+      transition: color 0.2s;
+    }
+    .check-row.pass { color: #111; }
+
+    .check-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+      background: #e5e7eb;
+      color: #aaa;
+      transition: all 0.2s;
+    }
+    .check-icon.ok  { background: #dcfce7; color: #16a34a; }
+    .check-icon.bad { background: #fee2e2; color: #dc2626; }
+
+    .alert {
+      margin-top: 1rem;
+      padding: 10px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+      gap: 7px;
+      align-items: flex-start;
+    }
+    .alert i { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .alert.leaked { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; display: none; }
+    .alert.tip    { background: #fefce8; color: #854d0e; border: 1px solid #fde68a; display: none; }
+
+    .entropy-section { display: flex; flex-direction: column; gap: 6px; }
+    .entropy-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #777;
+    }
+    .entropy-val {
+      font-family: "Courier New", monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 500;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Header -->
+  <div class="header">
+    <i class="ti ti-lock"></i>
+    <div>
+      <div class="header-text">Password strength checker</div>
+      <div class="header-sub">DecodeLabs · Cyber Security Project 1 · Batch 2026</div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <label for="pw-input">Enter your password</label>
+  <div class="pw-wrap">
+    <input class="pw-input" id="pw-input" type="password"
+           placeholder="Type a password…" autocomplete="new-password" />
+    <button class="eye-btn" id="eye-btn" aria-label="Toggle password visibility">
+      <i class="ti ti-eye" id="eye-icon"></i>
+    </button>
+  </div>
+
+  <!-- Strength meter -->
+  <div class="meter-wrap">
+    <div class="meter-bars">
+      <div class="bar" id="bar1"></div>
+      <div class="bar" id="bar2"></div>
+      <div class="bar" id="bar3"></div>
+      <div class="bar" id="bar4"></div>
+      <div class="bar" id="bar5"></div>
+    </div>
+    <div class="meter-row">
+      <span class="strength-label" id="strength-label">—</span>
+      <span class="score-label" id="score-label"></span>
+    </div>
+  </div>
+
+  <!-- Leaked warning -->
+  <div class="alert leaked" id="leaked-box" role="alert">
+    <i class="ti ti-alert-triangle"></i>
+    <span>This password appears in known data breach lists. Don't use it.</span>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Checks -->
+  <div class="checks">
+    <div class="check-row" id="chk-length">
+      <span class="check-icon" id="icon-length"><i class="ti ti-minus" style="font-size:9px"></i></span>
+      At least 8 characters
+    </div>
+    <div class="check-row" id="chk-upper">
+      <span class="check-icon" id="icon-upper"><i class="ti ti-minus" style="font-size:9px"></i></span>
+      Uppercase letter (A–Z)
+    </div>
+    <div class="check-row" id="chk-digit">
+      <span class="check-icon" id="icon-digit"><i class="ti ti-minus" style="font-size:9px"></i></span>
+      Number (0–9)
+    </div>
+    <div class="check-row" id="chk-symbol">
+      <span class="check-icon" id="icon-symbol"><i class="ti ti-minus" style="font-size:9px"></i></span>
+      Symbol (!@#$%^&amp;*…)
+    </div>
+    <div class="check-row" id="chk-len12">
+      <span class="check-icon" id="icon-len12"><i class="ti ti-minus" style="font-size:9px"></i></span>
+      12+ characters <span class="badge">bonus</span>
+    </div>
+  </div>
+
+  <!-- Tip -->
+  <div class="alert tip" id="tip-box" role="status" aria-live="polite">
+    <i class="ti ti-bulb"></i>
+    <span id="tip-text"></span>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Entropy -->
+  <div class="entropy-section">
+    <div class="entropy-row">
+      <span>Entropy estimate</span>
+      <span class="entropy-val" id="entropy-val">—</span>
+    </div>
+    <div class="entropy-row">
+      <span>Character pool size</span>
+      <span class="entropy-val" id="pool-val">—</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const LEAKED = new Set([
+    "password","123456","password123","admin","letmein","welcome",
+    "monkey","dragon","master","123456789","qwerty","abc123",
+    "iloveyou","1234567890","sunshine","princess","football",
+    "charlie","donald","password1"
+  ]);
+
+  const BAR_COLORS = {
+    0: "#e5e7eb",
+    1: "#ef4444",
+    2: "#ef4444",
+    3: "#f59e0b",
+    4: "#22c55e",
+    5: "#16a34a"
+  };
+
+  const LABELS = {
+    0: "—",
+    1: "Weak",
+    2: "Weak",
+    3: "Medium",
+    4: "Strong",
+    5: "Very strong"
+  };
+
+  const LABEL_COLORS = {
+    0: "#aaa",
+    1: "#dc2626",
+    2: "#dc2626",
+    3: "#d97706",
+    4: "#16a34a",
+    5: "#15803d"
+  };
+
+  // Toggle visibility
+  document.getElementById("eye-btn").addEventListener("click", () => {
+    const input = document.getElementById("pw-input");
+    const icon  = document.getElementById("eye-icon");
+    const hidden = input.type === "password";
+    input.type = hidden ? "text" : "password";
+    icon.className = hidden ? "ti ti-eye-off" : "ti ti-eye";
+  });
+
+  function setCheck(rowId, iconId, state) {
+    const row  = document.getElementById(rowId);
+    const icon = document.getElementById(iconId);
+    if (state === null) {
+      row.classList.remove("pass");
+      icon.className = "check-icon";
+      icon.innerHTML = '<i class="ti ti-minus" style="font-size:9px"></i>';
+    } else if (state) {
+      row.classList.add("pass");
+      icon.className = "check-icon ok";
+      icon.innerHTML = '<i class="ti ti-check" style="font-size:10px"></i>';
+    } else {
+      row.classList.remove("pass");
+      icon.className = "check-icon bad";
+      icon.innerHTML = '<i class="ti ti-x" style="font-size:10px"></i>';
+    }
+  }
+
+  function calcPool(pw) {
+    let pool = 0;
+    if (/[a-z]/.test(pw)) pool += 26;
+    if (/[A-Z]/.test(pw)) pool += 26;
+    if (/[0-9]/.test(pw))  pool += 10;
+    if (/[^a-zA-Z0-9]/.test(pw)) pool += 32;
+    return pool;
+  }
+
+  document.getElementById("pw-input").addEventListener("input", function () {
+    const pw = this.value;
+    const leakedBox = document.getElementById("leaked-box");
+    const tipBox    = document.getElementById("tip-box");
+    const tipText   = document.getElementById("tip-text");
+    const strLabel  = document.getElementById("strength-label");
+    const scoreLabel = document.getElementById("score-label");
+
+    // Reset state
+    if (!pw.length) {
+      for (let n = 1; n <= 5; n++)
+        document.getElementById("bar" + n).style.background = "#e5e7eb";
+      strLabel.textContent  = "—";
+      strLabel.style.color  = "#aaa";
+      scoreLabel.textContent = "";
+      leakedBox.style.display = "none";
+      tipBox.style.display    = "none";
+      ["length","upper","digit","symbol","len12"].forEach(k =>
+        setCheck("chk-" + k, "icon-" + k, null));
+      document.getElementById("entropy-val").textContent = "—";
+      document.getElementById("pool-val").textContent    = "—";
+      return;
+    }
+
+    const isLeaked  = LEAKED.has(pw.toLowerCase());
+    const hasLength = pw.length >= 8;
+    const hasLen12  = pw.length >= 12;
+    const hasUpper  = /[A-Z]/.test(pw);
+    const hasDigit  = /[0-9]/.test(pw);
+    const hasSymbol = /[^a-zA-Z0-9]/.test(pw);
+
+    setCheck("chk-length", "icon-length", hasLength);
+    setCheck("chk-upper",  "icon-upper",  hasUpper);
+    setCheck("chk-digit",  "icon-digit",  hasDigit);
+    setCheck("chk-symbol", "icon-symbol", hasSymbol);
+    setCheck("chk-len12",  "icon-len12",  hasLen12);
+
+    let score = 0;
+    if (hasLength) score++;
+    if (hasLen12)  score++;
+    if (hasUpper)  score++;
+    if (hasDigit)  score++;
+    if (hasSymbol) score++;
+    if (isLeaked)  score = Math.min(score, 1);
+
+    for (let n = 1; n <= 5; n++) {
+      document.getElementById("bar" + n).style.background =
+        n <= score ? BAR_COLORS[score] : "#e5e7eb";
+    }
+
+    leakedBox.style.display = isLeaked ? "flex" : "none";
+    strLabel.textContent = isLeaked ? "Leaked — change it" : LABELS[score];
+    strLabel.style.color = isLeaked ? "#dc2626" : LABEL_COLORS[score];
+    scoreLabel.textContent = score + "/5";
+
+    // Tips
+    const tips = [];
+    if (!hasLength) tips.push("Use at least 8 characters.");
+    if (!hasUpper)  tips.push("Add an uppercase letter.");
+    if (!hasDigit)  tips.push("Add a number (0–9).");
+    if (!hasSymbol) tips.push("Add a symbol like !@#$.");
+    if (hasLength && hasUpper && hasDigit && hasSymbol && !hasLen12)
+      tips.push("Try 12+ characters for maximum strength.");
+
+    if (tips.length && !isLeaked) {
+      tipBox.style.display = "flex";
+      tipText.textContent  = tips[0];
+    } else {
+      tipBox.style.display = "none";
+    }
+
+    // Entropy
+    const pool    = calcPool(pw);
+    const entropy = pool > 0 ? Math.round(pw.length * Math.log2(pool)) : 0;
+    document.getElementById("entropy-val").textContent = entropy + " bits";
+    document.getElementById("pool-val").textContent    = pool + " chars";
+  });
+</script>
+
+</body>
+</html>
